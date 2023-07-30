@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option csharp_namespace = "SpeedControlSystem";
+
+package speed_record;
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
+
+service SpeedRecorder {
+  rpc RecordSpeed (SpeedInfo) returns (Status);
+  rpc GetSpeedInfoAboveThreshold (DateSpeedThreshold) returns (Status);
+  rpc GetMinMaxSpeedInfo (DateOnly) returns (Status);
+}
+
+message SpeedInfo {
+  google.protobuf.Timestamp record_time = 1;
+  string transport_number = 2;
+  double recorded_speed = 3;
+}
+
+message DateSpeedThreshold {
+  google.protobuf.Timestamp record_date = 1;
+  double threshold_speed = 2;
+}
+
+message DateOnly {
+  google.protobuf.Timestamp record_date = 1;
+}
+
+message SpeedInfoList {
+  repeated SpeedInfo speed_info = 1;
+}
+
+message Status
+{
+  int32 code = 1;
+  string message = 2;
+  repeated google.protobuf.Any details = 3;
+}
