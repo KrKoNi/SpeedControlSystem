@@ -7,7 +7,6 @@ namespace SpeedControlSystem.Services;
 public class SpeedControlSystemService : SpeedRecorder.SpeedRecorderBase
 {
     private readonly IConfiguration _configuration;
-    static ReaderWriterLock locker = new ReaderWriterLock();
 
     public SpeedControlSystemService(IConfiguration configuration)
     {
@@ -36,16 +35,8 @@ public class SpeedControlSystemService : SpeedRecorder.SpeedRecorderBase
     {
         string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), request.RecordTime.ToDateTime().Date.ToShortDateString() + ".txt");
 
-        try
-        {
-            locker.AcquireWriterLock(int.MaxValue);
-            await using var output = File.Open(filePath, FileMode.Append);
-            request.WriteDelimitedTo(output);
-        }
-        finally
-        {
-            locker.ReleaseWriterLock();
-        }
+        await using var output = File.Open(filePath, FileMode.Append);
+        request.WriteDelimitedTo(output);
         
         return new Status
         {
