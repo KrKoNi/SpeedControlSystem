@@ -62,7 +62,18 @@ public class SpeedControlSystemService : SpeedRecorder.SpeedRecorderBase
         string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), request.RecordDate.ToDateTime().Date.ToShortDateString() + ".txt");
         var speedInfoList = new SpeedInfoList();
 
+        if (!File.Exists(filePath))
+        {
+            return new Status
+            {
+                Code = (int)StatusCode.Aborted,
+                Message = $"File {filePath} doesn't exist",
+                Details = { Any.Pack(new Empty()) }
+            };
+        }
+        
         await using var input = File.OpenRead(filePath);
+        
         while (input.Position < input.Length)
         {
             var speedInfo = SpeedInfo.Parser.ParseDelimitedFrom(input);
@@ -93,12 +104,23 @@ public class SpeedControlSystemService : SpeedRecorder.SpeedRecorderBase
 
         string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), request.RecordDate.ToDateTime().Date.ToShortDateString() + ".txt");
         var speedInfoList = new SpeedInfoList();
-
+        
+        if (!File.Exists(filePath))
+        {
+            return new Status
+            {
+                Code = (int)StatusCode.Aborted,
+                Message = $"File {filePath} doesn't exist",
+                Details = { Any.Pack(new Empty()) }
+            };
+        }
+        
         await using var input = File.OpenRead(filePath);
+        
         SpeedInfo minSpeedInfo = new SpeedInfo();
         SpeedInfo maxSpeedInfo = new SpeedInfo();
 
-        double minSpeed = Double.MaxValue;
+        double minSpeed = Double.PositiveInfinity;
         double maxSpeed = 0;
         while (input.Position < input.Length)
         {
