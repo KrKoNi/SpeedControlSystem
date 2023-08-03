@@ -7,6 +7,7 @@ namespace SpeedControlSystem.Services;
 public class SpeedControlSystemService : SpeedRecorder.SpeedRecorderBase
 {
     private readonly IConfiguration _configuration;
+    static ReaderWriterLock locker = new ReaderWriterLock();
 
     public SpeedControlSystemService(IConfiguration configuration)
     {
@@ -34,11 +35,18 @@ public class SpeedControlSystemService : SpeedRecorder.SpeedRecorderBase
     public override async Task<Status> RecordSpeed(SpeedInfo request, ServerCallContext context)
     {
         string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), request.RecordTime.ToDateTime().Date.ToShortDateString() + ".txt");
-        Console.Write(filePath);
 
-        await using var output = File.Open(filePath, FileMode.Append);
-        request.WriteDelimitedTo(output);
-
+        try
+        {
+            locker.AcquireWriterLock(int.MaxValue);
+            await using var output = File.Open(filePath, FileMode.Append);
+            request.WriteDelimitedTo(output);
+        }
+        finally
+        {
+            locker.ReleaseWriterLock();
+        }
+        
         return new Status
         {
             Code = (int)StatusCode.OK,
